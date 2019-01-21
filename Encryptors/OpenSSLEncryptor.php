@@ -58,7 +58,7 @@ abstract class OpenSSLEncryptor implements EncryptorInterface {
             $data = str_replace("<ENC>", "", $data);
 
             return trim(openssl_decrypt(
-                $data,
+                base64_decode($data),
                 $this->method,
                 $this->secretKey,
                 OPENSSL_RAW_DATA,

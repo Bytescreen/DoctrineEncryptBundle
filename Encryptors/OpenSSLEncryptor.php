@@ -16,38 +16,38 @@ abstract class OpenSSLEncryptor implements EncryptorInterface {
      */
     private $secretKey;
 
-    /**
-     * @var string
-     */
-    private $initializationVector;
-
+    
     /**
      * {@inheritdoc}
      */
     public function __construct($key) {
         $this->secretKey = md5($key);
-        $this->initializationVector = openssl_random_pseudo_bytes(openssl_cipher_iv_length($this->method));
     }
 
+    
     /**
      * {@inheritdoc}
      */
     public function encrypt($data) {
 
         if(is_string($data)) {
+            
+            $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($this->method));
+            
             return trim(base64_encode(openssl_encrypt(
                 $data,
                 $this->method,
                 $this->secretKey,
                 OPENSSL_RAW_DATA,
-                $this->initializationVector
-            ))). "<ENC>";
+                $iv
+            ))). ">>". bin2hex($iv). "<ENC>";
         }
 
         return $data;
 
     }
 
+    
     /**
      * {@inheritdoc}
      */
@@ -56,16 +56,20 @@ abstract class OpenSSLEncryptor implements EncryptorInterface {
         if(is_string($data)) {
 
             $data = str_replace("<ENC>", "", $data);
+            $data = explode(">>", $data);
+            $iv   = hex2bin($data[1]);
+            $data = $data[0];
 
             return trim(openssl_decrypt(
                 base64_decode($data),
                 $this->method,
                 $this->secretKey,
                 OPENSSL_RAW_DATA,
-                $this->initializationVector
+                $iv
             ));
         }
 
         return $data;
     }
+    
 }
